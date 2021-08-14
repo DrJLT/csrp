@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -12,7 +11,7 @@ import (
 )
 
 const (
-	cookieName  = "CSRF"
+	cookieName  = "csrf"
 	tokenLength = 32
 )
 
@@ -35,7 +34,6 @@ func CSRF(h httprouter.Handle) httprouter.Handle {
 		}
 
 		if len(realToken) != tokenLength || !verifyToken(realToken, sentToken) {
-			fmt.Println(1)
 			errorhandler(w)
 			return
 		}
@@ -48,13 +46,22 @@ func errorhandler(w http.ResponseWriter) {
 	http.Error(w, http.StatusText(400), 400)
 }
 
-func Token(w http.ResponseWriter) string {
-	token := generateToken()
+func Token(w http.ResponseWriter, r *http.Request) string {
+	var token []byte
+	tokenCookie, err := r.Cookie(cookieName)
+	if err == nil {
+		token, err = base64.StdEncoding.DecodeString(tokenCookie.Value)
+		if err == nil {
+			return base64.StdEncoding.EncodeToString(maskToken(token))
+		}
+	}
+	token = generateToken()
 	cookie := http.Cookie{
 		Name:     cookieName,
 		Value:    base64.StdEncoding.EncodeToString(token),
 		MaxAge:   86400,
 		HttpOnly: true,
+		Path:     "/",
 		// Secure: true,
 	}
 	http.SetCookie(w, &cookie)
@@ -72,9 +79,8 @@ func verifyToken(realToken, sentToken []byte) bool {
 	sentN := len(sentToken)
 	unmasked := unmaskToken(sentToken)
 	if realN == tokenLength && sentN == 2*tokenLength {
-		return len(unmasked) == tokenLength && subtle.ConstantTimeCompare(realToken, unmasked) == 1
+		return subtle.ConstantTimeCompare(realToken, unmasked) == 1
 	}
-	fmt.Println(realN, sentN, unmasked)
 	return false
 }
 
