@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -34,6 +35,7 @@ func CSRF(h httprouter.Handle) httprouter.Handle {
 		}
 
 		if len(realToken) != tokenLength || !verifyToken(realToken, sentToken) {
+			fmt.Println(1)
 			errorhandler(w)
 			return
 		}
@@ -72,6 +74,7 @@ func verifyToken(realToken, sentToken []byte) bool {
 	if realN == tokenLength && sentN == 2*tokenLength {
 		return len(unmasked) == tokenLength && subtle.ConstantTimeCompare(realToken, unmasked) == 1
 	}
+	fmt.Println(realN, sentN, unmasked)
 	return false
 }
 
