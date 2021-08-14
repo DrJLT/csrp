@@ -62,7 +62,7 @@ func Token(w http.ResponseWriter, r *http.Request) string {
 		MaxAge:   86400,
 		HttpOnly: true,
 		Path:     "/",
-		// Secure: true,
+		Secure:   true,
 	}
 	http.SetCookie(w, &cookie)
 	return base64.StdEncoding.EncodeToString(maskToken(token))
