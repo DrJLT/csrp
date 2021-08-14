@@ -50,13 +50,13 @@ func Token(w http.ResponseWriter) string {
 	token := generateToken()
 	cookie := http.Cookie{
 		Name:     cookieName,
-		Value:    base64.StdEncoding.EncodeToString(maskToken(token)),
+		Value:    base64.StdEncoding.EncodeToString(token),
 		MaxAge:   86400,
 		HttpOnly: true,
 		// Secure: true,
 	}
 	http.SetCookie(w, &cookie)
-	return base64.StdEncoding.EncodeToString(token)
+	return base64.StdEncoding.EncodeToString(maskToken(token))
 }
 
 func generateToken() []byte {
